@@ -1,125 +1,242 @@
-# 🏥 Intel-Unnati-Industrial-Training_PS-4 [EduRag]
+# 🏥 Intel-Unnati-Industrial-Training_PS-4 — EduRAG
 
-Companies have thousands of PDF documents like reports, manuals, and policies. Searching inside these documents is hard because the information is unstructured. Our task is to build a tool that converts PDFs into a structured format so that information can be easily searched and retrieved.
-
-## 🧠 Overview
-
-This project is a document-aware intelligent assistant that answers user queries strictly using information extracted from uploaded PDFs. It implements a Retrieval-Augmented Generation (RAG) pipeline combining vector-based document retrieval with large language models to generate accurate, context-grounded responses. The system supports user authentication and controlled access, ensuring that queries are answered only from authorized documents while preventing hallucinations and external knowledge leakage. The project is designed for secure and scalable document question-answering applications.
+EduRAG is a **document-aware intelligent assistant** built to enable **accurate question answering and insight generation from unstructured PDF documents** such as reports, manuals, policies, and research files.
+The system strictly answers queries and generates insights **only from user-uploaded documents**, ensuring **no hallucination and no external knowledge leakage**.
 
 ---
 
-![Application Flow](./assets/applicationFlow.png)
+## 🧠 Problem Statement
 
-![RAG Workflow Flow](./assets/applicationFlow.png)
+### Problem Statement – 4: Convert Enterprise PDFs into Searchable Knowledge
 
-![Core Modules](./assets/coreModules.png)
+Enterprises maintain thousands of PDF documents such as reports, manuals, research papers, and policies. Searching for specific information inside these documents is challenging because the data is largely **unstructured** and often spread across pages, tables, and images.
 
-[📄 View Full Project Report (PDF)](./assets/projectReport.pdf)
+The objective of this project is to build a tool that **converts PDFs into structured, searchable knowledge**, enabling efficient retrieval and accurate question answering.
 
-[📄 View Full Project (PPT)](./assets/projectReport.ppt)
+### Key Requirements Addressed
+
+- Properly read PDFs, including **scanned PDFs using OCR**, while preserving document structure and flow
+- Chunk documents into **meaningful sections without breaking chapters or context**
+- Store extracted textual content in a **Vector Database (Pinecone)** for semantic search
+- Extract tables and store them in a **searchable vector representation** (instead of a separate NoSQL store)
+- Handle images and charts by generating **short textual descriptions** so they are also searchable
+
+### Not in Scope (as per implementation)
+
+- Handwritten or very low-quality scan handling
+- Deep data extraction from complex charts
+
+### Stretch Goals Achieved
+
+- ✅ **Multilingual document support** using multilingual embeddings
+
+---
+
+## 🧩 Solution Overview
+
+EduRAG implements an end-to-end **PDF-to-Knowledge RAG pipeline** with user authentication. The overall flow is:
+
+1. User authenticates into the system
+2. User uploads one or more PDF documents
+3. Documents are processed using OCR (if required), chunked, and indexed into Pinecone
+4. User selects a document as the active context
+5. User can:
+
+   - Ask document-specific questions in the **Chat** section
+   - Generate **summaries and insights** from the selected document in the **Insights** section
+
+All responses are generated **strictly from the selected document context**, ensuring reliability and zero hallucination.
+
+---
+
+## 🏗️ System Architecture
+
+### 🔹 Application Flow
+
+![Application Workflow Cycle](./assets/Application-Workflow-Cycle.png)
+
+### 🔹 EduRAG Document-Centric RAG System Workflow
+
+![EduRAG Document-Centric RAG System Workflow](./assets/EduRAG Document-Centric RAG System Workflow.png)
+
+### 🔹 RAG Workflow
+
+![RAG-Pipeline Workflow](./assets/RAG-Pipeline-Workflow.png)
+
+### 🔹 EduRag Application Architecture
+
+![EduRag Application Architecture](./assets/EduRag Application Architecture.png)
+
+### 🔹 Core Modules
+
+![Core Modules](./assets/EduRAG Core Modules Architecture.png)
+
+---
+
+## 📄 Project Resources
+
+- 📘 **Full Project Report (PDF):**
+  [View Report](./assets/projectReport.pdf)
+
+- 📊 **Project Presentation (PPT):**
+  [View Presentation](./assets/projectReport.ppt)
 
 ---
 
 ## ⚙️ Tech Stack
 
-- _Backend:_ FastAPI (modular)
-- _Database:_ MongoDB Atlas (for users)
-- _Vector DB:_ Pinecone (RAG context)
-- _LLM:_ Groq API using LLaMA-3
-- _Embeddings:_ Google Generative AI Embeddings
-- _Authentication:_ HTTP Basic Auth + bcrypt
-- _Frontend (Optional):_ Streamlit
+| Layer      | Technology                      |
+| ---------- | ------------------------------- |
+| Backend    | FastAPI (modular architecture)  |
+| Database   | MongoDB Atlas (User Management) |
+| Vector DB  | Pinecone (Semantic Search)      |
+| LLM        | Groq API (LLaMA-3)              |
+| Embeddings | Google Generative AI Embeddings |
+| Auth       | HTTP Basic Auth + bcrypt        |
+| Frontend   | Streamlit (optional)            |
 
 ---
 
 ## 🧩 Core Modules
 
-| Module    | Responsibility                                              |
-| --------- | ----------------------------------------------------------- |
-| auth/     | Handles authentication (signup, login), hashing with bcrypt |
-| chat/     | Manages chat routes and query answering logic using RAG     |
-| vectordb/ | Document loading, chunking, and Pinecone indexing           |
-| database/ | MongoDB setup and user operations                           |
-| main.py   | Entry point for FastAPI app with route inclusion            |
+| Module      | Responsibility                               |
+| ----------- | -------------------------------------------- |
+| `auth/`     | User signup, login, password hashing         |
+| `chat/`     | RAG-based chat logic and query answering     |
+| `vectordb/` | PDF loading, chunking, and Pinecone indexing |
+| `database/` | MongoDB connection and user operations       |
+| `main.py`   | FastAPI entry point and route registration   |
 
 ---
 
 ## 📡 API Endpoints
 
-| Method | Route        | Description                         |
-| ------ | ------------ | ----------------------------------- |
-| POST   | /signup      | Register new users                  |
-| GET    | /login       | Login with HTTP Basic Auth          |
-| POST   | /upload_docs | Admin-only endpoint to upload files |
-| POST   | /chat        | Role-sensitive chatbot Q\&A         |
+| Method | Endpoint       | Description                   |
+| ------ | -------------- | ----------------------------- |
+| POST   | `/signup`      | Register a new user           |
+| GET    | `/login`       | User login via authentication |
+| POST   | `/upload_docs` | Upload PDF documents          |
 
 ---
 
 ## 🚀 Getting Started
 
-1. Clone the repo:
+### 1️⃣ Clone the Repository
 
-   bash
-   git clone https://github.com/yourusername/rbac-medicalAssistant.git
-   cd rbac-medicalAssistant
+```bash
+git clone https://github.com/Ismail007-Sk/Intel-Unnati-Industrial-Training_PS-4.git
+cd Intel-Unnati-Industrial-Training_PS-4
+```
 
-2. Create a .env file:
+### 2️⃣ Create Environment Variables
 
-   env
-   MONGO_URI=your_mongo_uri
-   DB_NAME=your_db_name
-   PINECONE_API_KEY=your_pinecone_key
-   GOOGLE_API_KEY=your_google_api_key
-   GROQ_API_KEY=your_groq_key
+Create a `.env` file in the root directory:
 
-3. Create venv:
+```env
+MONGO_URI=your_mongo_uri
+DB_NAME=your_db_name
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_INDEX_NAME=
+GOOGLE_API_KEY=your_google_api_key
+GROQ_API_KEY=your_groq_api_key
+```
 
-   bash
-   uv venv
-   .venv/Scripts/activate
+### 3️⃣ Create Virtual Environment
 
-4. Install dependencies:
+```bash
+uv venv
+.venv/Scripts/activate
+```
 
-   bash
-   uv pip install -r requirements.txt
+### 4️⃣ Install Dependencies
 
-5. Run the app:
+```bash
+uv pip install -r requirements.txt
+```
 
-   bash
-   uvicorn main:app --reload
+### 5️⃣ Run the Application
+
+```bash
+uvicorn main:app --reload
+```
+
+### 6️⃣ Run the Frontend Application
+
+```bash
+cd react_frontend
+npm run dev
+```
+
+---
+
+## 🔐 Security Features
+
+- Secure user authentication
+- Password hashing with bcrypt
+- User-isolated document access
+- Document-scoped context enforcement
+- No external or cross-document knowledge leakage
 
 ---
 
 ## 🌱 Future Enhancements
 
-- Add JWT-based Auth + Refresh Tokens
-- Build an interactive Streamlit/React-based frontend
-- Document download/preview functionality
-- Audit logs for medical compliance
-- Many more
-- _🧍️‍ Contributions are welcome! Feel free to fork and submit PRs._
+- Handwritten and low-quality scan handling
+- Advanced chart and complex table data extraction
+- JWT-based authentication
+- Streamlit / React frontend UI
+- Document preview and download support
+- Audit logs and analytics dashboard
 
 ---
 
-## 👥 Contributors and Responsibilities
+## 👥 Contributors
 
-### Supratim Nag (Project Lead)
+### 👨‍💻 **Supratim Nag** — Project Lead (GenAI Developer)
 
-- GitHub Link =
-- Overall system design and architecture
-- RAG-based document retrieval pipeline
-- Backend development using FastAPI
+- GitHub: _(https://github.com/snsupratim)_
+- System design & architecture
+- RAG pipeline implementation
+- Backend development (FastAPI)
 
-### Ismail Sk (ML / NLP Engineer)
+### 👨‍💻 **Ismail Sk** — ML / NLP Developer
 
-- GitHub Link =
-- Overall system design and architecture
-- RAG-based document retrieval pipeline
-- Backend development using FastAPI
+- GitHub: _(https://github.com/Ismail007-Sk)_
+- RAG logic & semantic retrieval
+- Backend API development
 
-### Sanchari Biswas (Frontend Developer)
+### 👩‍💻 **Sanchari Biswas** — Frontend Developer
 
-- GitHub Link =
-- Overall system design and architecture
-- RAG-based document retrieval pipeline
-- Backend development using FastAPI
+- GitHub: _(https://github.com/sanchari-0809)_
+- UI development & integration
+- Frontend architecture support
+
+---
+
+## 📊 Performance Evaluation
+
+The system includes quantitative evaluation metrics to benchmark document processing and retrieval quality.
+
+```text
+--- RAGpdf Evaluation ---
+PDF time per page (s)
+PDF time per document (s)
+OCR accuracy (%)
+Chunking accuracy (%)
+Search latency (s)
+Precision / Recall / MRR
+Table extraction accuracy (%)
+Pinecone vector count
+```
+
+These metrics validate the efficiency, accuracy, and scalability of the EduRAG pipeline.
+
+---
+
+## 📜 License
+
+This project is developed as part of **Intel Unnati Industrial Training Program (PS-4)** and is intended for educational and research purposes.
+
+---
+
+⭐ If you find this project useful, don’t forget to **star the repository**!
