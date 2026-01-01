@@ -57,7 +57,7 @@ All responses are generated **strictly from the selected document context**, ens
 
 ### 🔹 EduRAG Document-Centric RAG System Workflow
 
-![EduRAG Document-Centric RAG System Workflow](./assets/EduRAG Document-Centric RAG System Workflow.png)
+![EduRAG Document-Centric RAG System Workflow](./assets/EduRAG-Document-Centric-RAG-System-Workflow.png)
 
 ### 🔹 RAG Workflow
 
@@ -65,11 +65,11 @@ All responses are generated **strictly from the selected document context**, ens
 
 ### 🔹 EduRag Application Architecture
 
-![EduRag Application Architecture](./assets/EduRag Application Architecture.png)
+![EduRag Application Architecture](./assets/EduRag-Application-Architecture.png)
 
 ### 🔹 Core Modules
 
-![Core Modules](./assets/EduRAG Core Modules Architecture.png)
+![Core Modules](./assets/EduRAG-Core-Modules-Architecture.png)
 
 ---
 
