@@ -32,20 +32,69 @@ interface DashboardProps {
 
 type Tab = "documents" | "chat" | "insights";
 
-// Helper function to format the AI response text
-const formatMessageContent = (text: string) => {
-  // 1. Ensure text preceding a bullet point (*) has a newline
+// Helper to format regular text (bullet points)
+const formatMessageText = (text: string) => {
   let formatted = text.replace(/([^\n])\s*\*\s/g, "$1\n\n• ");
-
-  // 2. Replace starting * with a bullet point
   formatted = formatted.replace(/^\*\s/g, "• ");
-
-  // 3. Clean up multiple newlines if any
   return formatted.trim();
 };
 
+// NEW: Component to render Markdown Tables
+const MarkdownTable: React.FC<{ rows: string[] }> = ({ rows }) => {
+  if (rows.length < 2) return null;
+
+  // Extract headers
+  const headerRow = rows[0]
+    .split("|")
+    .filter((cell) => cell.trim() !== "")
+    .map((cell) => cell.trim());
+
+  // Extract data (skip index 1 because it's usually the separator |---|---|)
+  const dataRows = rows.slice(2).map((row) =>
+    row
+      .split("|")
+      .filter((cell, index, arr) => {
+        // Filter out empty start/end strings resulting from split
+        return index !== 0 && index !== arr.length - 1;
+      })
+      .map((cell) => cell.trim())
+  );
+
+  return (
+    <div className="overflow-x-auto my-4 rounded-xl border border-slate-200">
+      <table className="w-full text-left border-collapse text-sm">
+        <thead>
+          <tr className="bg-slate-100 text-slate-900">
+            {headerRow.map((header, i) => (
+              <th
+                key={i}
+                className="p-3 font-black uppercase tracking-wider text-[10px] border-b border-slate-200"
+              >
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="bg-white">
+          {dataRows.map((row, i) => (
+            <tr
+              key={i}
+              className="border-b border-slate-50 last:border-0 hover:bg-slate-50 transition-colors"
+            >
+              {row.map((cell, j) => (
+                <td key={j} className="p-3 text-slate-600 font-medium">
+                  {cell}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
 export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
-  const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("documents");
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -93,6 +142,56 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     scrollToBottom();
   }, [chatMessages]);
 
+  // NEW: Function to parse message and switch between Text and Table
+  const renderAIResponse = (text: string) => {
+    const lines = text.split("\n");
+    const elements: React.ReactNode[] = [];
+    let inTable = false;
+    let tableRows: string[] = [];
+    let textBuffer: string[] = [];
+
+    lines.forEach((line, index) => {
+      const trimmed = line.trim();
+      // Detect if line looks like a table row (starts and ends with pipe)
+      if (trimmed.startsWith("|") && trimmed.endsWith("|")) {
+        if (textBuffer.length > 0) {
+          elements.push(
+            <div key={`text-${index}`} className="whitespace-pre-wrap mb-2">
+              {formatMessageText(textBuffer.join("\n"))}
+            </div>
+          );
+          textBuffer = [];
+        }
+        inTable = true;
+        tableRows.push(trimmed);
+      } else {
+        if (inTable) {
+          // Flush table
+          elements.push(
+            <MarkdownTable key={`table-${index}`} rows={tableRows} />
+          );
+          tableRows = [];
+          inTable = false;
+        }
+        textBuffer.push(line);
+      }
+    });
+
+    // Flush remaining content
+    if (inTable && tableRows.length > 0) {
+      elements.push(<MarkdownTable key="table-end" rows={tableRows} />);
+    }
+    if (textBuffer.length > 0) {
+      elements.push(
+        <div key="text-end" className="whitespace-pre-wrap">
+          {formatMessageText(textBuffer.join("\n"))}
+        </div>
+      );
+    }
+
+    return elements;
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFileToUpload(e.target.files[0]);
@@ -102,13 +201,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   const handleUpload = async () => {
     if (!selectedFileToUpload) return;
 
-    // Reset progress and start simulation
     setUploadProgress(0);
-
-    // Create a simulated progress interval
     const interval = setInterval(() => {
       setUploadProgress((prev) => {
-        if (prev >= 90) return prev; // Hold at 90% until actually done
+        if (prev >= 90) return prev;
         return prev + 10;
       });
     }, 500);
@@ -125,7 +221,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
         body: formData,
       });
 
-      // Clear interval and complete progress
       clearInterval(interval);
       setUploadProgress(100);
 
@@ -138,13 +233,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           timestamp: new Date().toLocaleDateString(),
         };
 
-        // Small delay to let the user see the 100% bar before resetting
         setTimeout(() => {
           setUploadedFiles([newFile, ...uploadedFiles]);
           setSelectedFileToUpload(null);
           if (fileInputRef.current) fileInputRef.current.value = "";
           setSelectedFileId(newFile.id);
-          setUploadProgress(0); // Reset progress
+          setUploadProgress(0);
         }, 800);
       } else {
         alert("Document upload failed");
@@ -314,7 +408,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
           />
         </nav>
 
-        {/* NEW SECTION: File List in Sidebar */}
+        {/* File List in Sidebar */}
         <div className="flex-1 overflow-y-auto px-4 mt-8 mb-4 min-h-0">
           <p className="px-2 text-[9px] uppercase tracking-[0.25em] font-black text-slate-400 mb-4 sticky top-0 bg-white z-10 py-2">
             Recent Files
@@ -352,9 +446,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
         {/* Footer Actions: GitHub & Logout */}
         <div className="p-4 border-t border-slate-100 shrink-0 mt-auto space-y-2">
-          {/* GitHub Repo Link */}
           <a
-            href="https://github.com/Ismail007-Sk/Intel-Unnati-Industrial-Training_PS-4" // <--- PUT YOUR LINK HERE
+            href="https://github.com/Ismail007-Sk/Intel-Unnati-Industrial-Training_PS-4"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full flex items-center gap-3 px-5 py-4 text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-2xl transition-all group"
@@ -368,7 +461,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
             </span>
           </a>
 
-          {/* Logout Button */}
           <button
             onClick={onLogout}
             className="w-full flex items-center gap-3 px-5 py-4 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-2xl transition-all group"
@@ -455,7 +547,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                     disabled={!selectedFileToUpload || uploadProgress > 0}
                     className="relative h-14 w-40 overflow-hidden bg-slate-900 text-white rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-black transition-all active:scale-95 shadow-xl shadow-slate-200 disabled:opacity-70 disabled:active:scale-100"
                   >
-                    {/* Progress Bar Background */}
                     {uploadProgress > 0 && (
                       <div
                         className="absolute left-0 top-0 bottom-0 bg-slate-700 transition-all duration-300 ease-out"
@@ -463,11 +554,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                       />
                     )}
 
-                    {/* Button Content (z-10 to sit on top of progress bar) */}
                     <div className="relative z-10 flex items-center gap-3">
                       {uploadProgress > 0 ? (
                         <>
-                          {/* Simple Spinner */}
                           <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           {uploadProgress === 100 ? "Done" : "Uploading..."}
                         </>
@@ -616,17 +705,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                               )}
                             </div>
 
-                            {/* CHANGED: Added whitespace-pre-wrap to respect newlines and formatted content */}
                             <div
-                              className={`p-6 rounded-[2.25rem] text-[16px] leading-relaxed shadow-sm whitespace-pre-wrap ${
+                              className={`p-6 rounded-[2.25rem] text-[16px] leading-relaxed shadow-sm ${
                                 msg.sender === "user"
                                   ? "bg-slate-100 border border-slate-200 rounded-tr-none text-slate-900"
-                                  : "bg-white border border-slate-100 rounded-tl-none text-slate-700"
+                                  : "bg-white border border-slate-100 rounded-tl-none text-slate-700 w-full overflow-hidden"
                               }`}
                             >
-                              {/* Using the formatter only for AI messages to keep user text raw */}
                               {msg.sender === "ai"
-                                ? formatMessageContent(msg.text)
+                                ? renderAIResponse(msg.text)
                                 : msg.text}
                             </div>
                           </div>
@@ -722,9 +809,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                         </button>
                       </div>
 
-                      {/* CHANGED: Added whitespace-pre-wrap here too for consistency */}
-                      <div className="text-lg text-slate-200 whitespace-pre-wrap leading-relaxed font-medium">
-                        {formatMessageContent(extractionResult)}
+                      <div className="text-lg text-slate-200 leading-relaxed font-medium">
+                        {renderAIResponse(extractionResult)}
                       </div>
                     </div>
                   </div>
